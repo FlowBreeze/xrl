@@ -4,7 +4,17 @@ _fb_xrl_error(){
   echo "$@" 1>&2;
   exit 1
 }
-#
+
+_fb_xrl_run_with_vgl(){
+  # FIXME skip sudo
+  # FIXME backslash
+  local _FB_XRL_CMD=$1
+  if (( $FB_XRL_VGL_WHITELIST[(I)$_FB_XRL_CMD] )) {
+    return 0
+  }
+  return 1
+}
+
 [[ -z "$FB_XRL_WARPPER" ]] && _fb_xrl_error env FB_XRL_WARPPER not set
 [[ -z "$FB_XRL_ID" ]] && _fb_xrl_error env FB_XRL_ID not set
 [[ -z "$FB_XRL_VGL_WHITELIST" ]] &&
@@ -12,6 +22,13 @@ _fb_xrl_error(){
         'google-chrome'
         'alacritty'
     )
+
+local _FB_XRL_RUN_CMD=()
+if {_fb_xrl_run_with_vgl $@} {
+  _FB_XRL_RUN_CMD+="vglrun"
+}
+_FB_XRL_RUN_CMD+=$@
+
 
 local _FB_XRL_SSH_HOST
 
@@ -36,18 +53,9 @@ if ! {_fb_xrl_attached} {
   _fb_xrl_attach
 }
 
-# FIXME skip sudo
-# FIXME backslash
-local _FB_XRL_CMD=$1
-local _FB_XRL_RUN=()
-if (( $FB_XRL_VGL_WHITELIST[(I)$_FB_XRL_CMD] )) {
-  _FB_XRL_RUN+=vglrun
-}
-_FB_XRL_RUN+=($@)
-
 ssh "$_FB_XRL_SSH_HOST" 'zsh -s' <<EOF
 $_FB_XRL_FUNCTIONS
 
-echo running $_FB_XRL_RUN
-_fb_xrl_run $_FB_XRL_RUN
+echo start running $_FB_XRL_RUN_CMD
+_fb_xrl_run
 EOF

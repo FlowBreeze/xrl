@@ -9,7 +9,7 @@ local _FB_XRL_SCREEN_SESSION="xrl-$_FB_XRL_SSH_HOST-$_FB_XRL_DISPLAY"
 
 _FB_XRL_FUNCTIONS+=$(cat <<EOF
 _fb_xrl_initialized(){
-  if ! [[ -d /run/user/\$(id -u)/xpra/$_FB_XRL_DISPLAY ]] {
+  if ! [[ -f /run/user/\$(id -u)/xpra/$_FB_XRL_DISPLAY/server.pid ]] {
     return 1
   }
 
@@ -27,19 +27,21 @@ _fb_xrl_initialized(){
 }
 
 _fb_xrl_init(){
-  if [[ -d /run/user/\$(id -u)/xpra/$_FB_XRL_DISPLAY ]] {
+  if [[ -f /run/user/\$(id -u)/xpra/$_FB_XRL_DISPLAY/server.pid ]] {
     echo stopping previous display
-    xpra stop :$_FB_XRL_DISPLAY --start='script -ec "setsid screen -dmS $_FB_XRL_SCREEN_SESSION" /dev/null' --input-method=fcitx --start="fcitx5 -r"
+    xpra stop :$_FB_XRL_DISPLAY
   }
   echo starting display
-  xpra start :$_FB_XRL_DISPLAY --start='script -ec "setsid screen -dmS $_FB_XRL_SCREEN_SESSION" /dev/null' --input-method=fcitx --start="fcitx5 -r"
+  xpra start :$_FB_XRL_DISPLAY --start='script -ec "setsid screen -dmS $_FB_XRL_SCREEN_SESSION" /dev/null' --input-method=fcitx --start="fcitx5 -r" --forward-xdg-open=off
   while ! {screen -ls "$_FB_XRL_SCREEN_SESSION" > /dev/null} {
     sleep 1
   }
 }
 
 _fb_xrl_run(){
-  env DISPLAY=:$_FB_XRL_DISPLAY "\$@"
+  # TODO find a better solution
+  echo send keycodes to screen: "$_FB_XRL_RUN_CMD &^M"
+  screen -S "$_FB_XRL_SCREEN_SESSION" -p 0 -X stuff "$_FB_XRL_RUN_CMD &^M" &
 }
 EOF
 )
