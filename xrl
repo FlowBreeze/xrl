@@ -9,7 +9,8 @@ _fb_xrl_run_with_vgl(){
   # FIXME skip sudo
   # FIXME backslash
   local _FB_XRL_CMD=$1
-  if (( $FB_XRL_VGL_WHITELIST[(I)$_FB_XRL_CMD] )) {
+  local _FB_XRL_VGL_WHITELIST_ARRAY=(${=FB_XRL_VGL_WHITELIST})
+  if (( $_FB_XRL_VGL_WHITELIST_ARRAY[(I)$_FB_XRL_CMD] )) {
     return 0
   }
   return 1
@@ -17,13 +18,9 @@ _fb_xrl_run_with_vgl(){
 
 [[ -z "$FB_XRL_WARPPER" ]] && _fb_xrl_error env FB_XRL_WARPPER not set
 [[ -z "$FB_XRL_ID" ]] && _fb_xrl_error env FB_XRL_ID not set
-[[ -z "$FB_XRL_VGL_WHITELIST" ]] &&
-    FB_XRL_VGL_WHITELIST=(
-        'google-chrome'
-        'alacritty'
-    )
+[[ -z "$FB_XRL_VGL_WHITELIST" ]] && FB_XRL_VGL_WHITELIST="google-chrome alacritty"
 
-local _FB_XRL_RUN_CMD=()
+local _FB_XRL_RUN_CMD=("setsid")
 if {_fb_xrl_run_with_vgl $@} {
   _FB_XRL_RUN_CMD+="vglrun"
 }
